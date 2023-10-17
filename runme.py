@@ -12,41 +12,29 @@ class VideoStream:
     """Camera object that controls video streaming from the Picamera"""
 
     def __init__(self, resolution=(640, 480), framerate=30):
-        # Initialize the PiCamera and the camera image stream
         self.stream = cv2.VideoCapture(0)
         ret = self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
         ret = self.stream.set(3, resolution[0])
         ret = self.stream.set(4, resolution[1])
 
-        # Read first frame from the stream
         (self.grabbed, self.frame) = self.stream.read()
-
-        # Variable to control when the camera is stopped
         self.stopped = False
 
     def start(self):
-        # Start the thread that reads frames from the video stream
         Thread(target=self.update, args=()).start()
         return self
 
     def update(self):
-        # Keep looping indefinitely until the thread is stopped
         while True:
-            # If the camera is stopped, stop the thread
             if self.stopped:
-                # Close camera resources
                 self.stream.release()
                 return
-
-            # Otherwise, grab the next frame from the stream
             (self.grabbed, self.frame) = self.stream.read()
 
     def read(self):
-        # Return the most recent frame
         return self.frame
 
     def stop(self):
-        # Indicate that the camera and thread should be stopped
         self.stopped = True
 
 
@@ -93,16 +81,10 @@ use_TPU = args.edgetpu
 pkg = importlib.util.find_spec("tflite_runtime")
 if pkg:
     from tflite_runtime.interpreter import Interpreter
-
-    if use_TPU:
-        from tflite_runtime.interpreter import load_delegate
 else:
     from tensorflow.lite.python.interpreter import Interpreter
 
-    if use_TPU:
-        from tensorflow.lite.python.interpreter import load_delegate
 
-# Get path to current working directory
 CWD_PATH = os.getcwd()
 PATH_TO_CKPT = os.path.join(CWD_PATH, MODEL_NAME, GRAPH_NAME)
 PATH_TO_LABELS = os.path.join(CWD_PATH, MODEL_NAME, LABELMAP_NAME)
@@ -110,14 +92,11 @@ PATH_TO_LABELS = os.path.join(CWD_PATH, MODEL_NAME, LABELMAP_NAME)
 with open(PATH_TO_LABELS, "r") as f:
     labels = [line.strip() for line in f.readlines()]
 
-
 if labels[0] == "???":
     del labels[0]
 
-
 interpreter = Interpreter(model_path=PATH_TO_CKPT)
 interpreter.allocate_tensors()
-
 
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
